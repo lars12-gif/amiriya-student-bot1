@@ -28,6 +28,9 @@ function saveDb() {
   fs.renameSync(tmp, DB_FILE);
 }
 const states = new Map();
+const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const stateKey = (ctx) => `${ctx.chat.id}:${ctx.from.id}`;
+const cancelKeyboard = () => new InlineKeyboard().text("✖️ إلغاء العملية", "flow:cancel");
 const dateNow = () => new Date().toLocaleString("en-GB", { timeZone: "Asia/Baghdad" });
 
 async function isGroupAdmin(userId) {
@@ -105,7 +108,29 @@ bot.callbackQuery("nav:home", async ctx => {
   catch { await ctx.reply("اكتب /start لفتح القائمة الرئيسية."); }
 });
 
-bot.callbackQuery("a:panel", async ctx => {
+
+bot.callbackQuery("flow:cancel", async ctx => {
+  states.delete(stateKey(ctx));
+  await ctx.answerCallbackQuery({ text: "تم إلغاء العملية." });
+  const admin = isPrivate(ctx) && await isGroupAdmin(ctx.from.id);
+  await editScreen(
+    ctx,
+    "↩️ تم إلغاء العملية.\n\n🎓 بوت إعدادية العامرية للبنين\nالسادس العلمي — قاعة 1\n\nاختر الخدمة المطلوبة:",
+    mainKeyboard(admin)
+  );
+});
+
+bot.command("cancel", async ctx => {
+  const key = stateKey(ctx);
+  const existed = states.delete(key);
+  const admin = isPrivate(ctx) && await isGroupAdmin(ctx.from.id);
+  await ctx.reply(
+    existed ? "✖️ تم إلغاء العملية والعودة للقائمة الرئيسية." : "لا توجد عملية معلّقة لإلغائها.",
+    { reply_markup: mainKeyboard(admin) }
+  );
+});
+
+ bot.callbackQuery("a:panel", async ctx => {
   if (!(await requirePrivateAdmin(ctx))) return;
   await ctx.answerCallbackQuery();
   await editScreen(ctx, "⚙️ لوحة الإدارة\nاختر العملية المطلوبة:", adminKeyboard());
@@ -152,8 +177,8 @@ bot.callbackQuery(/^s:(schedule|homework|absences|announcements|files|suggest)$/
     return editScreen(ctx, "📁 الملفات والمحاضرات\nاختر الملف المطلوب:", k);
   }
   if (action === "suggest") {
-    states.set(`${ctx.chat.id}:${ctx.from.id}`, { action: "suggest" });
-    return editScreen(ctx, "✉️ أرسل اقتراحك أو شكواك برسالة نصية واحدة.\n\nبعد الإرسال ستعود للقائمة الرئيسية.");
+    states.set(stateKey(ctx), { action: "suggest", expiresAt: Date.now() + STATE_TTL_MS });
+    return editScreen(ctx, "✉️ أرسل اقتراحك أو شكواك برسالة نصية واحدة.\n\nهذه العملية خاصة بحسابك فقط. يمكنك إلغاؤها من الزر أدناه.", cancelKeyboard());
   }
 });
 
@@ -182,8 +207,8 @@ for (const action of Object.keys(prompts)) {
   bot.callbackQuery(`a:${action}`, async ctx => {
     if (!(await requirePrivateAdmin(ctx))) return;
     await ctx.answerCallbackQuery();
-    states.set(`${ctx.chat.id}:${ctx.from.id}`, { action });
-    await editScreen(ctx, `⚙️ ${prompts[action]}`, back());
+    states.set(stateKey(ctx), { action, expiresAt: Date.now() + STATE_TTL_MS });
+    await editScreen(ctx, `⚙️ ${prompts[action]}\n\nيمكنك إلغاء العملية من الزر أدناه.`, cancelKeyboard());
   });
 }
 bot.callbackQuery("a:suggestions", async ctx => {
@@ -199,9 +224,13 @@ bot.on("message", async (ctx, next) => {
   const key = `${ctx.chat.id}:${ctx.from.id}`;
   const state = states.get(key);
   if (!state) return next();
+  if (!state.expiresAt || Date.now() > state.expiresAt) {
+    states.delete(key);
+    return ctx.reply("⌛ انتهت مهلة العملية تلقائياً. افتح القائمة واختر العملية من جديد.", { reply_markup: mainKeyboard(isPrivate(ctx) && await isGroupAdmin(ctx.from.id)) });
+  }
 
   if (state.action === "suggest") {
-    if (!ctx.message.text?.trim()) return ctx.reply("أرسل الاقتراح كنص من فضلك.");
+    if (!ctx.message.text?.trim()) return ctx.reply("أرسل الاقتراح كنص من فضلك، أو اضغط إلغاء.");
     db.suggestions.push({ user_id: ctx.from.id, name: ctx.from.first_name, text: ctx.message.text.trim(), date: dateNow() });
     saveDb();
     states.delete(key);
