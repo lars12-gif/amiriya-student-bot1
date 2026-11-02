@@ -1,15 +1,9 @@
 {
   "name": "amiriya-student-bot",
-  "version": "1.0.0",
-  "description": "Telegram student assistant bot for Al-Amiriya Preparatory School",
+  "version": "5.0.0",
+  "description": "AMIRIYA STUDENT BOT with Gemini AI and !ai prefix commands",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "engines": {
-    "node": ">=22"
-  },
-  "dependencies": {
-    "grammy": "^1.35.0"
-  }
+  "scripts": { "start": "node index.js" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "grammy": "^1.36.1" }
 }
