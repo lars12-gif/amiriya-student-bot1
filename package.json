@@ -1,0 +1,16 @@
+{
+  "name": "amiriya-student-bot",
+  "version": "6.0.0",
+  "description": "AMIRIYA STUDENT BOT with Groq AI grounded in Iraqi sixth scientific PDF textbooks",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "grammy": "^1.36.1",
+    "pdf-parse": "2.4.5"
+  }
+}
