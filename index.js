@@ -58,7 +58,9 @@ const cancelKeyboard = () =>
   new InlineKeyboard().text('✖️ إلغاء العملية', 'flow:cancel');
 
 const dateNow = () =>
-  new Date().toLocaleString('en-GB', { timeZone: 'Asia/Baghdad' });
+  new Date().toLocaleString('en-GB', {
+    timeZone: 'Asia/Baghdad'
+  });
 
 async function isGroupAdmin(userId) {
   try {
@@ -153,7 +155,148 @@ async function requirePrivateAdmin(ctx) {
   return true;
 }
 
-// Groq AI
+// ========================================
+// AI SYSTEM - GROQ
+// ========================================
+
+const AI_SYSTEM_PROMPT = `
+أنت المساعد الدراسي الرسمي لبوت إعدادية العامرية للبنين.
+أنت متخصص حصراً في تدريس المنهج العراقي للسادس العلمي.
+
+━━━━━━━━━━━━━━━━━━
+أولاً: المرجع الدراسي
+━━━━━━━━━━━━━━━━━━
+
+1. مرجعك الدراسي الوحيد هو المنهج العراقي الرسمي للسادس العلمي.
+2. لا تستخدم مناهج دول أخرى ولا تستبدل المصطلحات العراقية بمصطلحات من مناهج أجنبية.
+3. لا تقدم معلومات خارج المنهج على أنها جزء منه.
+4. لا تنسب أي تعريف أو قانون أو نص إلى كتاب الوزارة دون التأكد.
+5. إذا لم تكن متأكداً من أن المعلومة موجودة في المنهج العراقي، وضّح ذلك للطالب.
+6. إذا طلب الطالب نصاً حرفياً من الكتاب ولم تكن متأكداً من النص، اطلب منه إرسال صورة الصفحة.
+7. لا تخترع أرقام صفحات أو فصول أو أسماء مصادر.
+
+━━━━━━━━━━━━━━━━━━
+ثانياً: الإجابة الوزارية
+━━━━━━━━━━━━━━━━━━
+
+اجعل الإجابة مناسبة لأسلوب الامتحانات الوزارية العراقية.
+
+عند السؤال عن تعريف:
+- اكتب التعريف العلمي المختصر والدقيق.
+- لا تضف شرحاً طويلاً داخل التعريف.
+- ضع الشرح الإضافي بعد التعريف عند الحاجة.
+
+عند السؤال عن التعليل:
+- ابدأ بكلمة "السبب:" أو "التعليل:".
+- اذكر السبب العلمي المباشر.
+- لا تخرج عن المطلوب.
+
+عند السؤال عن التعداد:
+- استخدم نقاطاً مرقمة.
+- لا تسقط أي نقطة تعرف أنها مطلوبة في المنهج.
+
+عند السؤال عن المقارنة:
+- استخدم جدولاً أو نقاطاً متقابلة.
+- وضح أوجه الاختلاف المطلوبة فقط.
+
+عند السؤال عن المسائل الرياضية والفيزيائية والكيميائية:
+- اكتب المعطيات.
+- اكتب القانون المناسب.
+- عوّض بالقيم.
+- وضح خطوات الحل.
+- اكتب الناتج النهائي مع الوحدة.
+- راجع الإشارات والوحدات والحسابات.
+
+عند السؤال عن القوانين:
+- اكتب القانون بصورة واضحة.
+- عرف الرموز.
+- اذكر الوحدات عند الحاجة.
+
+━━━━━━━━━━━━━━━━━━
+ثالثاً: الدقة وعدم التخمين
+━━━━━━━━━━━━━━━━━━
+
+1. الدقة أهم من سرعة الإجابة.
+2. راجع السؤال جيداً قبل الإجابة.
+3. لا تتسرع في إعطاء جواب غير متأكد منه.
+4. لا توافق الطالب على معلومة خاطئة لمجرد أنه اقترحها.
+5. إذا احتمل السؤال أكثر من معنى، اطلب توضيحاً.
+6. إذا لم تتوفر لديك معلومات كافية، قل ذلك بصراحة.
+7. لا تخترع إجابة وزارية ولا تدّعِ أن إجابتك مطابقة حرفياً للكتاب دون دليل.
+8. إذا أرسل الطالب صورة من الكتاب، اعتمد على محتواها في الإجابة، ولا تتجاهل أي شرط أو ملاحظة ظاهرة فيها.
+
+إذا لم تستطع التأكد من الجواب، استخدم العبارة:
+"حتى أعطيك إجابة وزارية دقيقة ومطابقة للمنهج، أرسل صورة الصفحة أو نص الفقرة من كتاب الوزارة."
+
+━━━━━━━━━━━━━━━━━━
+رابعاً: تنسيق الإجابات
+━━━━━━━━━━━━━━━━━━
+
+1. أجب بالعربية الواضحة.
+2. استخدم اللهجة العراقية في التوضيح البسيط فقط.
+3. اجعل الإجابة العلمية بالفصحى المناسبة للامتحان.
+4. استخدم عناوين واضحة.
+5. اترك سطراً فارغاً بين الفقرات.
+6. لا تستخدم LaTeX.
+7. لا تكتب رموزاً برمجية أو أوامر تنسيق.
+8. اكتب المعادلات بصيغة نصية واضحة، مثل:
+   ΔS = Q / T
+   وليس أوامر LaTeX.
+9. استخدم الرموز العلمية الصحيحة مثل:
+   Δ ، π ، × ، ÷ ، ≥ ، ≤ ، °C
+10. لا تكثر من الإيموجي.
+11. لا تكتب مقدمات طويلة قبل الإجابة.
+12. لا تخلط بين التعريف والشرح والملاحظات.
+
+━━━━━━━━━━━━━━━━━━
+خامساً: أسلوب التعامل مع الطالب
+━━━━━━━━━━━━━━━━━━
+
+- أنت مدرس مساعد للسادس العلمي العراقي.
+- ساعد الطالب على فهم المادة والاستعداد للامتحانات الوزارية.
+- إذا طلب جواباً مختصراً، أعطه الجواب المختصر.
+- إذا طلب شرحاً، اشرح خطوة بخطوة.
+- إذا طلب صيغة وزارية، اجعلها مباشرة ومنظمة.
+- لا تدّعِ امتلاك نسخة من كتاب الوزارة إذا لم تكن متاحة لك.
+- لا تخرج عن المواد الدراسية للسادس العلمي إلا إذا طلب الطالب موضوعاً آخر بوضوح.
+
+تذكر دائماً:
+صحة المعلومة ومطابقتها للمنهج أهم من سرعة الرد أو طول الإجابة.
+`;
+
+// تحويل التنسيقات إلى نص مناسب لتليغرام
+function formatAiAnswer(text) {
+  if (!text) return '';
+
+  return text
+    .replace(/\\\[/g, '')
+    .replace(/\\\]/g, '')
+    .replace(/\\\(/g, '')
+    .replace(/\\\)/g, '')
+    .replace(/\\Delta/g, 'Δ')
+    .replace(/\\times/g, '×')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\geq/g, '≥')
+    .replace(/\\leq/g, '≤')
+    .replace(/\\neq/g, '≠')
+    .replace(/\\rightarrow/g, '→')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\approx/g, '≈')
+    .replace(/\\pm/g, '±')
+    .replace(/\\sqrt\{([^{}]+)\}/g, '√($1)')
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1) / ($2)')
+    .replace(/\\text\{([^{}]+)\}/g, '$1')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/^\s*#{1,6}\s*/gm, '')
+    .replace(/```(?:\w+)?/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// طلب الإجابة من Groq
 async function askGroq(question) {
   if (!GROQ_API_KEY) {
     throw new Error('AI_NOT_CONFIGURED');
@@ -172,14 +315,15 @@ async function askGroq(question) {
         messages: [
           {
             role: 'system',
-            content: 'أنت مساعد تعليمي لبوت إعدادية العامرية للبنين، السادس العلمي في العراق. أجب بالعربية الواضحة واللهجة العراقية عند الحاجة. اشرح المسائل خطوة بخطوة. لا تخترع معلومات من المنهج العراقي إذا لم تكن متأكداً.'
+            content: AI_SYSTEM_PROMPT
           },
           {
             role: 'user',
             content: question
           }
         ],
-        max_completion_tokens: 800
+        temperature: 0.2,
+        max_completion_tokens: 1800
       })
     }
   );
@@ -202,7 +346,6 @@ async function askGroq(question) {
   }
 
   const data = await response.json();
-
   const answer = data.choices?.[0]?.message?.content?.trim();
 
   if (!answer) {
@@ -212,6 +355,7 @@ async function askGroq(question) {
   return answer;
 }
 
+// إرسال الإجابة للطالب
 async function handleAiQuestion(ctx, question) {
   const last = aiCooldown.get(ctx.from.id) || 0;
   const wait = AI_COOLDOWN_MS - (Date.now() - last);
@@ -230,11 +374,15 @@ async function handleAiQuestion(ctx, question) {
     );
   }
 
-  const status = await ctx.reply('🤖 جاري تجهيز الإجابة...');
+  const status = await ctx.reply(
+    '🤖 تم استلام سؤالك.\n\n📚 يجري إعداد الإجابة الدراسية والتدقيق فيها...'
+  );
 
   try {
-    const answer = await askGroq(question);
-    const chunks = answer.match(/[\s\S]{1,4000}/g) || [
+    const rawAnswer = await askGroq(question);
+    const answer = formatAiAnswer(rawAnswer);
+
+    const chunks = answer.match(/[\s\S]{1,3900}/g) || [
       'لم أتمكن من إعداد إجابة.'
     ];
 
@@ -271,7 +419,10 @@ async function handleAiQuestion(ctx, question) {
   }
 }
 
-// Start
+// ========================================
+// START
+// ========================================
+
 bot.command('start', async ctx => {
   const admin = isPrivate(ctx) && await isGroupAdmin(ctx.from.id);
 
@@ -281,17 +432,22 @@ bot.command('start', async ctx => {
   );
 });
 
-// Help
+// HELP
 bot.command('help', async ctx => {
   const admin = isPrivate(ctx) && await isGroupAdmin(ctx.from.id);
 
   await ctx.reply(
-    '🎓 خدمات إعدادية العامرية للبنين\n\n🤖 !ai سؤالك هنا — اسأل المساعد\n↩️ رد على رسالة بـ !ai لشرحها\n!help — عرض الأوامر\n/start — القائمة الرئيسية\n/cancel — إلغاء العملية',
+    '🎓 خدمات إعدادية العامرية للبنين\n\n' +
+    '🤖 !ai سؤالك هنا — اسأل المساعد الدراسي\n' +
+    '↩️ رد على رسالة بـ !ai لشرحها\n' +
+    '!help — عرض الأوامر\n' +
+    '/start — القائمة الرئيسية\n' +
+    '/cancel — إلغاء العملية',
     { reply_markup: mainKeyboard(admin) }
   );
 });
 
-// Home
+// HOME
 bot.callbackQuery('nav:home', async ctx => {
   await ctx.answerCallbackQuery();
 
@@ -302,7 +458,7 @@ bot.callbackQuery('nav:home', async ctx => {
   }
 });
 
-// Cancel button
+// CANCEL BUTTON
 bot.callbackQuery('flow:cancel', async ctx => {
   states.delete(stateKey(ctx));
 
@@ -319,7 +475,7 @@ bot.callbackQuery('flow:cancel', async ctx => {
   );
 });
 
-// Cancel command
+// CANCEL COMMAND
 bot.command('cancel', async ctx => {
   const existed = states.delete(stateKey(ctx));
   const admin = isPrivate(ctx) && await isGroupAdmin(ctx.from.id);
@@ -330,7 +486,7 @@ bot.command('cancel', async ctx => {
   );
 });
 
-// Admin panel
+// ADMIN PANEL
 bot.callbackQuery('a:panel', async ctx => {
   if (!(await requirePrivateAdmin(ctx))) return;
 
@@ -343,7 +499,7 @@ bot.callbackQuery('a:panel', async ctx => {
   );
 });
 
-// AI button
+// AI BUTTON
 bot.callbackQuery('s:ai', async ctx => {
   await ctx.answerCallbackQuery();
 
@@ -354,12 +510,16 @@ bot.callbackQuery('s:ai', async ctx => {
 
   await editScreen(
     ctx,
-    '🤖 المساعد الدراسي الذكي\n\nأرسل سؤالك برسالة نصية واحدة.\nيمكنك الإلغاء من الزر أدناه.',
+    '🤖 المساعد الدراسي للمنهج العراقي\n\n' +
+    '📚 متخصص بالسادس العلمي.\n' +
+    'أرسل سؤالك برسالة نصية واحدة.\n\n' +
+    'سيحاول تقديم إجابة منظمة بأسلوب وزاري، ' +
+    'وإذا احتاج إلى نص الكتاب سيطلب منك صورة الصفحة.',
     cancelKeyboard()
   );
 });
 
-// Student services
+// STUDENT SERVICES
 bot.callbackQuery(
   /^s:(schedule|homework|absences|announcements|files|suggest)$/,
   async ctx => {
@@ -386,7 +546,9 @@ bot.callbackQuery(
         ctx,
         items.length
           ? '📚 آخر الواجبات المثبتة:\n\n' +
-            items.map((x, i) => `${i + 1}. ${x.text}\n🕒 ${x.date}`).join('\n\n')
+            items.map((x, i) =>
+              `${i + 1}. ${x.text}\n🕒 ${x.date}`
+            ).join('\n\n')
           : '📚 لا توجد واجبات مثبتة حالياً.'
       );
     }
@@ -421,7 +583,9 @@ bot.callbackQuery(
         ctx,
         items.length
           ? '📢 آخر الإعلانات:\n\n' +
-            items.map((x, i) => `${i + 1}. ${x.text}\n🕒 ${x.date}`).join('\n\n')
+            items.map((x, i) =>
+              `${i + 1}. ${x.text}\n🕒 ${x.date}`
+            ).join('\n\n')
           : '📢 لا توجد إعلانات حالياً.'
       );
     }
@@ -461,7 +625,7 @@ bot.callbackQuery(
   }
 );
 
-// Absence photo
+// ABSENCE PHOTO
 bot.callbackQuery('s:absence_photo', async ctx => {
   await ctx.answerCallbackQuery();
 
@@ -474,7 +638,7 @@ bot.callbackQuery('s:absence_photo', async ctx => {
   });
 });
 
-// Files
+// FILES
 bot.callbackQuery(/^f:(\d+)$/, async ctx => {
   await ctx.answerCallbackQuery();
 
@@ -489,7 +653,7 @@ bot.callbackQuery(/^f:(\d+)$/, async ctx => {
   });
 });
 
-// Admin actions
+// ADMIN ACTIONS
 const prompts = {
   schedule: 'أرسل صورة الجدول الجديدة. ستستبدل الصورة الحالية.',
   homework: 'أرسل نص الواجب الجديد.',
@@ -517,7 +681,7 @@ for (const action of Object.keys(prompts)) {
   });
 }
 
-// Suggestions
+// SUGGESTIONS
 bot.callbackQuery('a:suggestions', async ctx => {
   if (!(await requirePrivateAdmin(ctx))) return;
 
@@ -537,7 +701,7 @@ bot.callbackQuery('a:suggestions', async ctx => {
   );
 });
 
-// Message flows
+// MESSAGE FLOWS
 bot.on('message', async (ctx, next) => {
   const key = stateKey(ctx);
   const state = states.get(key);
@@ -686,13 +850,17 @@ bot.on('message', async (ctx, next) => {
   });
 });
 
-// Prefix commands
+// PREFIX COMMANDS
 bot.on('message:text', async (ctx, next) => {
   const text = ctx.message.text.trim();
 
   if (/^!help(?:@\w+)?$/i.test(text)) {
     return ctx.reply(
-      '📌 أوامر البوت:\n• !ai سؤالك — اسأل المساعد الدراسي\n• بالرد على رسالة: !ai — اطلب شرحها\n• /start — القائمة الرئيسية\n• /help — المساعدة'
+      '📌 أوامر البوت:\n' +
+      '• !ai سؤالك — اسأل المساعد الدراسي\n' +
+      '• بالرد على رسالة: !ai — اطلب شرحها\n' +
+      '• /start — القائمة الرئيسية\n' +
+      '• /help — المساعدة'
     );
   }
 
@@ -713,7 +881,7 @@ bot.on('message:text', async (ctx, next) => {
       }
 
       question =
-        `اشرح هذه الرسالة وأجب عنها إن كانت سؤالاً:\n\n${question}`;
+        `اشرح هذه الرسالة وأجب عنها وفق المنهج العراقي للسادس العلمي:\n\n${question}`;
     }
 
     if (!question) {
@@ -725,7 +893,7 @@ bot.on('message:text', async (ctx, next) => {
     return handleAiQuestion(ctx, question);
   }
 
-  // Link moderation
+  // LINK MODERATION
   if (
     String(ctx.chat.id) === String(GROUP_ID) &&
     /(https?:\/\/|t\.me\/|www\.)/i.test(text) &&
@@ -744,20 +912,22 @@ bot.on('message:text', async (ctx, next) => {
   return next();
 });
 
-// Welcome new members
+// WELCOME NEW MEMBERS
 bot.on('message:new_chat_members', async ctx => {
   if (String(ctx.chat.id) !== String(GROUP_ID)) return;
 
   for (const member of ctx.message.new_chat_members) {
     if (!member.is_bot) {
       await ctx.reply(
-        `أهلاً ${member.first_name} 👋\nنورت إعدادية العامرية للبنين — السادس العلمي، قاعة 1.\nاضغط /start لفتح القائمة التفاعلية.`
+        `أهلاً ${member.first_name} 👋\n` +
+        'نورت إعدادية العامرية للبنين — السادس العلمي، قاعة 1.\n' +
+        'اضغط /start لفتح القائمة التفاعلية.'
       );
     }
   }
 });
 
-// Error handling
+// ERROR HANDLING
 bot.catch(err => {
   console.error(
     'Bot error:',
@@ -765,7 +935,7 @@ bot.catch(err => {
   );
 });
 
-// Start bot
+// START BOT
 (async () => {
   try {
     const me = await bot.api.getMe();
